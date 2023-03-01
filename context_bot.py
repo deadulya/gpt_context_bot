@@ -3,6 +3,7 @@ from collections import defaultdict
 import openai
 import telebot
 from dotenv import dotenv_values
+from openai.error import TryAgain
 
 config = dotenv_values(".env")
 
@@ -37,6 +38,7 @@ def handle_message(message):
                 break
         else:
             return
+    # bot.send_message(message.chat.id, "Пошел спрашивать у openai")
 
     # Получаем ID пользователя
     user_id = message.chat.id
@@ -58,7 +60,7 @@ def handle_message(message):
 # Генерируем ответ на основе входящего текста и текущего контекста диалога
 def generate_response(text):
     model_engine = model
-    prompt = f"{text}"
+    prompt = f"{text[-500:]}"
     max_tokens = 1024
 
     # Определяем параметры запроса
@@ -69,8 +71,13 @@ def generate_response(text):
         "n": 1,
         "stop": None,
         "temperature": 0.5,
+        "timeout": 30
     }
-    response_gen = openai.Completion.create(**kwargs)
+    try:
+        response_gen = openai.Completion.create(**kwargs)
+    except TryAgain:
+        return {'text': "Timeout"}
+
     return {'text': response_gen.choices[0].text}
 
 

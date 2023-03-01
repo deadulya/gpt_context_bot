@@ -1,8 +1,8 @@
-import telebot
-import openai
-from dotenv import dotenv_values
-
 from collections import defaultdict
+
+import openai
+import telebot
+from dotenv import dotenv_values
 
 config = dotenv_values(".env")
 
@@ -16,6 +16,7 @@ bot = telebot.TeleBot(config.get('BOT_TOKEN'))
 context_dict = defaultdict(str)
 
 model = "text-davinci-003"
+
 
 # Обрабатываем входящие сообщения от пользователей
 @bot.message_handler(func=lambda message: True)
@@ -31,7 +32,7 @@ def handle_message(message):
     context = context_dict[user_id]
 
     # Генерируем ответ на основе входящего текста и текущего контекста диалога
-    response = generate_response(context+message.text)
+    response = generate_response(context + message.text)
 
     # Сохраняем новый контекст диалога
     context_dict[user_id] = context_dict[user_id] + response['text'] + "\n"

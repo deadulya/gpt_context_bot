@@ -17,6 +17,11 @@ context_dict = defaultdict(str)
 
 model = "text-davinci-003"
 
+starts = [bot.user.full_name,
+          bot.user.username,
+          bot.user.first_name,
+          "bot", "бот", "тупая машина"]
+
 
 # Обрабатываем входящие сообщения от пользователей
 @bot.message_handler(func=lambda message: True)
@@ -24,6 +29,14 @@ def handle_message(message):
     # Проверяем, что сообщение было отправлено нашему боту
     if message.text.startswith('/'):
         return
+
+    if message.chat.type != 'private':
+        for i in starts:
+            if message.text.lower().startswith(i) or message.text.lower().startswith('@' + i):
+                message.text = message.text[len(i):]
+                break
+        else:
+            return
 
     # Получаем ID пользователя
     user_id = message.chat.id

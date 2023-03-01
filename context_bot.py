@@ -33,7 +33,7 @@ def handle_message(message):
 
     if message.chat.type != 'private':
         for i in starts:
-            if message.text.lower().startswith(i) or message.text.lower().startswith('@' + i):
+            if message.text.lower().startswith(i) or message.text.lower().startswith('@' + i.lower()):
                 message.text = message.text[len(i):]
                 break
         else:

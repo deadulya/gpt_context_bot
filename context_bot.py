@@ -1,9 +1,13 @@
-from collections import defaultdict
+import logging
+import uuid
+from collections import defaultdict, deque
 
 import openai
 import telebot
 from dotenv import dotenv_values
-from openai.error import TryAgain
+from openai.error import OpenAIError
+
+logging.basicConfig(level=logging.INFO)
 
 config = dotenv_values(".env")
 
@@ -14,9 +18,9 @@ openai.api_key = config.get('API_KEY')
 bot = telebot.TeleBot(config.get('BOT_TOKEN'))
 
 # Словарь для хранения контекста диалога с каждым пользователем
-context_dict = defaultdict(str)
+context_dict = defaultdict(lambda: deque(maxlen=10))
 
-model = "text-davinci-003"
+model = "gpt-3.5-turbo"
 
 starts = [bot.user.full_name,
           bot.user.username,
@@ -38,48 +42,43 @@ def handle_message(message):
                 break
         else:
             return
-    # bot.send_message(message.chat.id, "Пошел спрашивать у openai")
 
     # Получаем ID пользователя
-    user_id = message.chat.id
+    chat_id = message.chat.id
 
     # Получаем текущий контекст диалога с пользователем
-    context = context_dict[user_id]
+    context = context_dict[chat_id]
+    context.append({'role': 'user', 'content': message.text})
 
     # Генерируем ответ на основе входящего текста и текущего контекста диалога
-    response = generate_response(context + message.text)
-
-    # Сохраняем новый контекст диалога
-    context_dict[user_id] = context_dict[user_id] + response['text'] + "\n"
+    response = generate_response(list(context))
 
     # Отправляем ответ пользователю, если текст не пустой
-    if response['text']:
-        bot.reply_to(message, response['text'])
+    if response:
+        context.append(response)
+        bot.reply_to(message, response['content'])
+    else:
+        bot.send_message("Api error", chat_id=chat_id)
 
 
 # Генерируем ответ на основе входящего текста и текущего контекста диалога
-def generate_response(text):
-    model_engine = model
-    prompt = f"{text[-500:]}"
-    max_tokens = 1024
-
-    # Определяем параметры запроса
-    kwargs = {
-        "engine": model_engine,
-        "prompt": prompt,
-        "max_tokens": max_tokens,
-        "n": 1,
-        "stop": None,
-        "temperature": 0.5,
-        "timeout": 30
-    }
+def generate_response(context):
+    salt = f"[{uuid.uuid4().hex}]"
     try:
-        response_gen = openai.Completion.create(**kwargs)
-    except TryAgain:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=context
+        )
+        resp = response['choices'][0]['message']
+    except OpenAIError as e:
+        logging.error(salt + f'OpenAI Error: {e}')
+        return {'text': "OpenAI Error"}
+    except TimeoutError:
+        logging.info(salt + f'Got timeout')
         return {'text': "Timeout"}
+    if not (len(resp)):
+        resp = "Empty openai answer"
+    return resp
 
-    return {'text': response_gen.choices[0].text}
 
-
-# Запускаем бота
 bot.polling()

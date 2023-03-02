@@ -25,7 +25,7 @@ model = "gpt-3.5-turbo"
 starts = [bot.user.full_name,
           bot.user.username,
           bot.user.first_name,
-          "bot", "бот", "тупая машина"]
+          "bot", "бот", "тупая машина", "MBA Intern", "Intern"]
 
 
 # Обрабатываем входящие сообщения от пользователей

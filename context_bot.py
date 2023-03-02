@@ -25,7 +25,7 @@ model = "gpt-3.5-turbo"
 starts = [bot.user.full_name,
           bot.user.username,
           bot.user.first_name,
-          "bot", "бот", "тупая машина", "MBA Intern", "Intern"]
+          "bot", "бот", "тупая машина", "MBA Intern", "Intern", "сударь"]
 
 
 # Обрабатываем входящие сообщения от пользователей
@@ -36,8 +36,9 @@ def handle_message(message):
         return
 
     if message.chat.type != 'private':
+        content = message.text.lower()
         for i in starts:
-            if message.text.lower().startswith(i) or message.text.lower().startswith('@' + i.lower()):
+            if content.startswith(i.lower()) or content.startswith('@' + i.lower()):
                 message.text = message.text[len(i):]
                 break
         else:

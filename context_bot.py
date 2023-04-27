@@ -9,7 +9,8 @@ import telebot
 from dotenv import dotenv_values
 from openai.error import OpenAIError
 
-from db_manager import add_message, get_or_create_user, update_balance, get_balance, set_admin, check_admin
+from db_manager import add_message, get_or_create_user, update_balance, get_balance, set_admin, check_admin, \
+    get_userlist
 
 logging.basicConfig(level=logging.INFO)
 
@@ -113,7 +114,8 @@ def process_commands(message):
         set_admin_command(message)
     elif message.text == '/start':
         send_start_message(message)
-    # Добавьте обработку других команд здесь, если необходимо
+    elif message.text == '/user_list':
+        user_list_command(message)
 
 
 def set_admin_command(message):
@@ -152,6 +154,21 @@ def add_messages_command(message):
                          f"Пользователю {username} добавлено {amount} сообщений. Текущий баланс: {get_balance(username)} сообщений.")
         else:
             bot.reply_to(message, "Используйте команду в формате: /add_messages user_id amount")
+    else:
+        bot.reply_to(message, "У вас нет прав администратора.")
+
+
+
+def user_list_command(message):
+    chat_id = message.chat.id
+    if check_admin(chat_id):
+        users = get_userlist()
+        resp = ''
+        for u in users:
+            resp += f'{u.chat_id}. @{u.username} - {u.balance} сообщений, {u.is_admin}\n'
+        bot.reply_to(message, resp)
+
+
     else:
         bot.reply_to(message, "У вас нет прав администратора.")
 

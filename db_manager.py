@@ -57,6 +57,14 @@ def get_balance(username):
     return balance
 
 
+def get_userlist():
+    with session_scope() as session:
+        users = session.query(User).all()
+        for u in users:
+            session.expunge(u)
+            yield u
+
+
 def set_admin(username):
     with session_scope() as session:
         user = session.query(User).filter_by(username=username).first()

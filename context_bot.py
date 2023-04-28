@@ -36,6 +36,14 @@ starts = [bot.user.full_name,
 # Обрабатываем входящие сообщения от пользователей
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
+    if message.chat.type != 'private':
+        content = message.text.lower()
+        for i in starts:
+            if content.startswith(i.lower()) or content.startswith('@' + i.lower()):
+                message.text = message.text[len(i):]
+                break
+        else:
+            return
     # Проверяем, что сообщение было отправлено нашему боту
     if message.text.startswith('/'):
         process_commands(message)

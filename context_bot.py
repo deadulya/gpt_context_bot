@@ -146,6 +146,10 @@ def balance_command(message):
 
 
 def send_start_message(message):
+    # Получаем ID пользователя
+    chat_id = message.chat.id
+    username = message.chat.username
+    get_or_create_user(chat_id, username)
     bot.send_message(message.chat.id, f"""
     /balance - проверить остаток сообщения""")
 
